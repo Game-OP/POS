@@ -1,11 +1,291 @@
+<!-- KODE HTML LENGKAP DIMULAI DI SINI -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>POS ChocoTok</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; }
+    .sidebar {
+      width: 220px; background: #4a2c1a; color: white; height: 100vh; padding: 20px;
+    }
+    .sidebar h2 { font-size: 20px; margin: 0 0 30px 0; }
+    .sidebar a {
+      display: block; color: white; padding: 10px; text-decoration: none; border-radius: 4px;
+      cursor: pointer;
+    }
+    .sidebar a:hover { background: #6e4226; }
+    .main {
+      flex: 1; padding: 20px; background-color: #f5e9dc;
+    }
+    .header { display: flex; align-items: center; gap: 10px; }
+    .header img { height: 40px; }
+    h1 { margin: 0; color: #4a2c1a; }
+    .section-title { margin-top: 30px; color: #5c3d2e; }
+    .menu { display: flex; flex-wrap: wrap; gap: 10px; }
+    .item {
+      background: #fff5eb; border: 2px solid #8b4513; padding: 10px;
+      border-radius: 8px; cursor: pointer; text-align: center; width: 160px;
+    }
+    .item img {
+      width: 100%; height: 100px; object-fit: cover;
+      border-radius: 5px; margin-bottom: 5px;
+    }
+    .item:hover { background: #e0c5aa; }
+    table {
+      width: 100%; margin-top: 20px; border-collapse: collapse;
+    }
+    th, td { border: 1px solid #ccc; padding: 10px; }
+    button {
+      padding: 10px 20px; background: #8b4513; color: white;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+    button:hover { background: #a0522d; }
+    .footer { text-align: right; margin-top: 20px; }
+    #qris, #cashInput, #resultUang {
+      display: none; margin-top: 20px; text-align: center;
+    }
+    #qris img { max-width: 200px; }
+    #pos-page, #transaksi-page {
+      display: none;
+    }
+    #pos-page.active, #transaksi-page.active {
+      display: block;
+    }
+    input[type="number"] {
+      padding: 10px; width: 200px; font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Selamat Datang di POS ChocoTok!</h1>
-  <p>Ini versi awal halaman kasir kamu.</p>
+  <div class="sidebar">
+    <h2>ChocoTok POS</h2>
+    <a onclick="showPage('pos')">POS Kasir</a>
+    <a onclick="showPage('transaksi')">Transaksi Hari Ini</a>
+  </div>
+  <div class="main">
+    <div class="header">
+      <img src="logo.png" alt="Logo">
+      <h1>ChocoTok</h1>
+    </div>
+
+    <div id="pos-page" class="active">
+      <h2 class="section-title">Menu Hotteok</h2>
+      <div class="menu" id="hotteok-menu"></div>
+
+      <h2 class="section-title">Menu Churros</h2>
+      <div class="menu" id="churros-menu"></div>
+
+      <h2 class="section-title">Menu Minuman</h2>
+      <div class="menu" id="minuman-menu"></div>
+
+      <table id="keranjang">
+        <tr>
+          <th>Produk</th>
+          <th>Harga</th>
+          <th>Aksi</th>
+        </tr>
+      </table>
+
+      <div class="footer">
+        <h2>Total: Rp <span id="total">0</span></h2>
+        <button onclick="showPayment()">Selesai</button>
+      </div>
+
+      <div id="qris">
+        <h3>Silakan scan QRIS:</h3>
+        <img src="qris.png" alt="QRIS Code">
+      </div>
+
+      <div id="cashInput">
+        <h3>Pembayaran Cash</h3>
+        <p>Total: Rp <span id="totalCash">0</span></p>
+        <input type="number" id="uangDibayar" placeholder="Masukkan jumlah uang">
+        <button onclick="hitungKembalian()">Hitung Kembalian</button>
+      </div>
+
+      <div id="resultUang">
+        <h3>Kembalian: Rp <span id="kembalian"></span></h3>
+      </div>
+    </div>
+
+    <div id="transaksi-page">
+      <h2 class="section-title">Transaksi Hari Ini</h2>
+      <div id="riwayat"></div>
+    </div>
+  </div>
+
+  <script>
+    const hotteokMenu = [
+      { nama: "Hotteok Choco Crunchy", harga: 25000, img: "hotteok_choco.png" },
+      { nama: "Hotteok Mozzarella", harga: 25000, img: "hotteok_mozza.png" },
+      { nama: "Hotteok Meses", harga: 25000, img: "hotteok_meses.png" },
+      { nama: "Hotteok SKM", harga: 25000, img: "hotteok_skm.png" },
+      { nama: "Hotteok Gula Halus", harga: 25000, img: "hotteok_gula.png" }
+    ];
+
+    const churrosMenu = [
+      { nama: "Churros Choco Crunchy", harga: 25000, img: "churros_choco.png" },
+      { nama: "Churros Meses", harga: 25000, img: "churros_meses.png" },
+      { nama: "Churros SKM", harga: 25000, img: "churros_skm.png" },
+      { nama: "Churros Gula Halus", harga: 25000, img: "churros_gula.png" }
+    ];
+
+    const minumanMenu = [
+      { nama: "Es Teh Ori", harga: 10000, img: "esteh_ori.png" },
+      { nama: "Es Teh Leci", harga: 12000, img: "esteh_leci.png" },
+      { nama: "Es Teh Lemon", harga: 12000, img: "esteh_lemon.png" },
+      { nama: "Es Teh Peach", harga: 12000, img: "esteh_peach.png" },
+      { nama: "Thai Tea", harga: 15000, img: "thaitea.png" }
+    ];
+
+    const keranjang = document.getElementById("keranjang");
+    const totalSpan = document.getElementById("total");
+    const totalCash = document.getElementById("totalCash");
+    const uangDibayar = document.getElementById("uangDibayar");
+    const kembalian = document.getElementById("kembalian");
+    const riwayat = document.getElementById("riwayat");
+
+    let total = 0;
+    let transaksiHariIni = [];
+
+    function tambahProduk(item) {
+      const row = keranjang.insertRow();
+      row.insertCell(0).innerText = item.nama;
+      row.insertCell(1).innerText = `Rp${item.harga}`;
+      const hapusCell = row.insertCell(2);
+      const hapusBtn = document.createElement("button");
+      hapusBtn.innerText = "Hapus";
+      hapusBtn.onclick = () => {
+        keranjang.deleteRow(row.rowIndex);
+        total -= item.harga;
+        totalSpan.innerText = total;
+      };
+      hapusCell.appendChild(hapusBtn);
+      total += item.harga;
+      totalSpan.innerText = total;
+    }
+
+    function buatMenu(id, list) {
+      const container = document.getElementById(id);
+      list.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `<img src="${item.img}" alt="${item.nama}"><div>${item.nama}<br>Rp${item.harga}</div>`;
+        div.onclick = () => tambahProduk(item);
+        container.appendChild(div);
+      });
+    }
+
+    function showPage(page) {
+      document.getElementById("pos-page").classList.remove("active");
+      document.getElementById("transaksi-page").classList.remove("active");
+      document.getElementById(page + "-page").classList.add("active");
+      if (page === "transaksi") tampilkanRiwayat();
+    }
+
+
+    function showPayment() {
+      document.getElementById("qris").style.display = "none";
+      document.getElementById("cashInput").style.display = "block";
+      totalCash.innerText = total;
+      uangDibayar.value = '';
+      kembalian.innerText = '';
+      document.getElementById("resultUang").style.display = "none";
+      if (confirm("Bayar dengan QRIS? (OK = QRIS, Cancel = Cash)")) {
+        document.getElementById("cashInput").style.display = "none";
+        document.getElementById("qris").style.display = "block";
+        simpanTransaksi("QRIS", total);
+        resetKeranjang();
+      }
+    }
+
+    function hitungKembalian() {
+      const bayar = parseInt(uangDibayar.value);
+      if (isNaN(bayar) || bayar < total) {
+        alert("Uang tidak cukup.");
+        return;
+      }
+      kembalian.innerText = bayar - total;
+      document.getElementById("resultUang").style.display = "block";
+      simpanTransaksi("Cash", total);
+      resetKeranjang();
+    }
+
+   function simpanTransaksi(metode, jumlah) {
+  const produk = [];
+  for (let i = 1; i < keranjang.rows.length; i++) {
+    const nama = keranjang.rows[i].cells[0].innerText;
+    produk.push(nama);
+  }
+
+  transaksiHariIni.push({
+    metode: metode,
+    jumlah: jumlah,
+    produk: produk
+  });
+}
+
+
+
+    function tampilkanRiwayat() {
+  let html = "";
+  let totalSemua = 0, totalQRIS = 0, totalCash = 0;
+
+  transaksiHariIni.forEach((t, i) => {
+    html += `<p>
+      #${i + 1} - ${t.metode} - Rp${t.jumlah}
+      <button onclick="hapusTransaksi(${i})">Hapus</button>
+    </p>`;
+    totalSemua += t.jumlah;
+    if (t.metode === "QRIS") totalQRIS += t.jumlah;
+    else totalCash += t.jumlah;
+  });
+
+  html += `<hr>
+    <p><b>Total Hari Ini:</b> Rp${totalSemua}</p>
+    <p><b>Total QRIS:</b> Rp${totalQRIS}</p>
+    <p><b>Total Cash:</b> Rp${totalCash}</p>
+    <button onclick="exportToExcel()">Export ke Excel</button>
+  `;
+
+  riwayat.innerHTML = html;
+}
+
+function hapusTransaksi(index) {
+  if (confirm("Yakin ingin menghapus transaksi ini?")) {
+    transaksiHariIni.splice(index, 1);
+    tampilkanRiwayat();
+  }
+}
+
+function exportToExcel() {
+  let csv = 'Nomor,Metode,Jumlah\n';
+  transaksiHariIni.forEach((t, i) => {
+    csv += `${i + 1},${t.metode},${t.jumlah}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "transaksi_chocotok.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+
+    function resetKeranjang() {
+      while (keranjang.rows.length > 1) keranjang.deleteRow(1);
+      total = 0;
+      totalSpan.innerText = 0;
+    }
+
+    buatMenu("hotteok-menu", hotteokMenu);
+    buatMenu("churros-menu", churrosMenu);
+    buatMenu("minuman-menu", minumanMenu);
+  </script>
 </body>
 </html>
